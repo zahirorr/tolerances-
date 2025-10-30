@@ -283,9 +283,13 @@
 
     let currentLang = 'en';
 
-    function formatValue(num) {
-      const rounded = Number(num.toFixed(3));
-      return (rounded === 0 ? 0 : rounded).toString();
+    function formatNumber(num) {
+      return num.toFixed(3).replace('.', ',');
+    }
+
+    function formatSigned(num) {
+      const sign = num >= 0 ? '+' : '-';
+      return `${sign}${formatNumber(Math.abs(num))}`;
     }
 
     function resetResults() {
@@ -330,9 +334,9 @@
       const lower = -tolValue;
       const total = upper - lower;
 
-      upperValue.textContent = `+${formatValue(upper)} mm`;
-      lowerValue.textContent = `${formatValue(lower)} mm`;
-      totalValue.textContent = `${formatValue(total)} mm`;
+      upperValue.textContent = `${formatSigned(upper)} mm`;
+      lowerValue.textContent = `${formatSigned(lower)} mm`;
+      totalValue.textContent = `${formatNumber(total)} mm`;
       messageEl.textContent = '';
     }
 
