@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DIN ISO 2768 Tolerance Calculator</title>
+<style>
+  :root {
+    color-scheme: light dark;
+    font-family: 'Segoe UI', Tahoma, sans-serif;
+    --accent: #1f7a8c;
+    --bg: #f6f9fc;
+    --card: #ffffffdd;
+    --text: #1a1a1a;
+  }
+  body {
+    margin: 0;
+    padding: 0;
+    background: var(--bg);
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+  }
+  .app {
+    background: var(--card);
+    backdrop-filter: blur(6px);
+    border-radius: 18px;
+    box-shadow: 0 18px 40px rgba(15, 23, 42, 0.12);
+    padding: clamp(1.5rem, 4vw, 2.5rem);
+    width: min(500px, 92vw);
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+  .language-switcher {
+    display: flex;
+    gap: 0.5rem;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+  }
+  .lang-btn {
+    border: 1px solid rgba(31, 122, 140, 0.35);
+    background: rgba(255,255,255,0.65);
+    padding: 0.35rem 0.75rem;
+    border-radius: 999px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: all 0.2s ease;
+  }
+  .lang-btn.active {
+    background: var(--accent);
+    color: white;
+    border-color: transparent;
+  }
+  h1 {
+    margin: 0;
+    font-size: clamp(1.6rem, 4vw, 2.2rem);
+    text-align: center;
+  }
+  label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 0.35rem;
+  }
+  input, select, button {
+    width: 100%;
+    padding: 0.65rem 0.75rem;
+    border-radius: 10px;
+    border: 1px solid rgba(15, 23, 42, 0.15);
+    font-size: 1rem;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    font-family: inherit;
+    background: rgba(255,255,255,0.8);
+  }
+  input:focus, select:focus, button:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(31, 122, 140, 0.2);
+  }
+  button {
+    background: var(--accent);
+    color: white;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .grid {
+    display: grid;
+    gap: 0.75rem;
+  }
+  .results {
+    border-radius: 14px;
+    background: rgba(31, 122, 140, 0.08);
+    padding: 1rem;
+    display: grid;
+    gap: 0.75rem;
+  }
+  .result-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 1rem;
+  }
+  .result-label {
+    font-weight: 600;
+  }
+  .message {
+    text-align: center;
+    padding: 0.5rem 0.75rem;
+    border-radius: 10px;
+    background: rgba(220, 38, 38, 0.12);
+    color: #b91c1c;
+    font-weight: 600;
+    display: none;
+  }
+  .rtl {
+    direction: rtl;
+    text-align: right;
+  }
+  .rtl .result-item {
+    flex-direction: row-reverse;
+  }
+  .rtl .language-switcher {
+    justify-content: flex-start;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0f172a;
+      --card: rgba(15, 23, 42, 0.75);
+      --text: #f8fafc;
+    }
+    .lang-btn {
+      background: rgba(30, 41, 59, 0.75);
+      color: var(--text);
+    }
+    input, select {
+      background: rgba(15, 23, 42, 0.7);
+      color: var(--text);
+    }
+  }
+</style>
+</head>
+<body>
+<div class="app" id="app">
+  <div class="language-switcher">
+    <button class="lang-btn" data-lang="en">🇬🇧 English</button>
+    <button class="lang-btn" data-lang="de">🇩🇪 Deutsch</button>
+    <button class="lang-btn" data-lang="ar">🇸🇾 العربية</button>
+  </div>
+  <h1 id="title">DIN ISO 2768 Tolerance Calculator</h1>
+  <div class="grid">
+    <div>
+      <label for="nominal" id="label-nominal">Enter nominal size (mm)</label>
+      <input type="number" id="nominal" placeholder="0" min="0" step="any">
+    </div>
+    <div>
+      <label for="class" id="label-class">Select tolerance class</label>
+      <select id="class">
+        <option value="f">f – fine</option>
+        <option value="m">m – medium</option>
+        <option value="c">c – coarse</option>
+        <option value="v">v – very coarse</option>
+      </select>
+    </div>
+    <button id="calculate">Calculate</button>
+  </div>
+  <div class="message" id="message"></div>
+  <div class="results" id="results" hidden>
+    <div class="result-item">
+      <span class="result-label" id="label-upper">Upper deviation (+)</span>
+      <span id="upper-value">±0.00 mm</span>
+    </div>
+    <div class="result-item">
+      <span class="result-label" id="label-lower">Lower deviation (−)</span>
+      <span id="lower-value">±0.00 mm</span>
+    </div>
+    <div class="result-item">
+      <span class="result-label" id="label-total">Total tolerance</span>
+      <span id="total-value">0.00 mm</span>
+    </div>
+  </div>
+</div>
+<script>
+  const toleranceTable = [
+    { min: 0, minInclusive: true, max: 3, f: 0.05, m: 0.1, c: 0.2, v: 0.5 },
+    { min: 3, minInclusive: false, max: 6, f: 0.05, m: 0.1, c: 0.3, v: 0.5 },
+    { min: 6, minInclusive: false, max: 30, f: 0.1, m: 0.2, c: 0.5, v: 1.0 },
+    { min: 30, minInclusive: false, max: 120, f: 0.15, m: 0.3, c: 0.8, v: 1.5 },
+    { min: 120, minInclusive: false, max: 400, f: 0.2, m: 0.5, c: 1.2, v: 2.5 },
+    { min: 400, minInclusive: false, max: 1000, f: 0.3, m: 0.8, c: 2.0, v: 4.0 },
+    { min: 1000, minInclusive: false, max: 2000, f: 0.5, m: 1.2, c: 3.0, v: 6.0 }
+  ];
+
+  const translations = {
+    en: {
+      title: "DIN ISO 2768 Tolerance Calculator",
+      enter_nominal: "Enter nominal size (mm)",
+      select_class: "Select tolerance class",
+      calculate: "Calculate",
+      upper_tol: "Upper deviation (+)",
+      lower_tol: "Lower deviation (−)",
+      total_tol: "Total tolerance",
+      classes: {
+        f: "f – fine",
+        m: "m – medium",
+        c: "c – coarse",
+        v: "v – very coarse"
+      },
+      messages: {
+        invalid: "Please enter a valid nominal size.",
+        out_of_range: "Nominal size is outside the supported range (0–2000 mm)."
+      }
+    },
+    de: {
+      title: "DIN ISO 2768 Toleranzrechner",
+      enter_nominal: "Nennmaß eingeben (mm)",
+      select_class: "Toleranzklasse wählen",
+      calculate: "Berechnen",
+      upper_tol: "Obere Abweichung (+)",
+      lower_tol: "Untere Abweichung (−)",
+      total_tol: "Gesamttoleranz",
+      classes: {
+        f: "f – fein",
+        m: "m – mittel",
+        c: "c – grob",
+        v: "v – sehr grob"
+      },
+      messages: {
+        invalid: "Bitte ein gültiges Nennmaß eingeben.",
+        out_of_range: "Nennmaß liegt außerhalb des unterstützten Bereichs (0–2000 mm)."
+      }
+    },
+    ar: {
+      title: "حاسبة السماحات DIN ISO 2768",
+      enter_nominal: "أدخل المقاس الاسمي (مم)",
+      select_class: "اختر فئة التسامح",
+      calculate: "احسب",
+      upper_tol: "التسامح الأعلى (+)",
+      lower_tol: "التسامح الأدنى (−)",
+      total_tol: "إجمالي التسامح",
+      classes: {
+        f: "دقة عالية – f",
+        m: "دقة متوسطة – m",
+        c: "دقة منخفضة – c",
+        v: "دقة منخفضة جداً – v"
+      },
+      messages: {
+        invalid: "يرجى إدخال مقاس اسمي صالح.",
+        out_of_range: "المقاس الاسمي خارج النطاق المدعوم (0–2000 مم)."
+      }
+    }
+  };
+
+  const elements = {
+    title: document.getElementById('title'),
+    nominalLabel: document.getElementById('label-nominal'),
+    classLabel: document.getElementById('label-class'),
+    calculateBtn: document.getElementById('calculate'),
+    upperLabel: document.getElementById('label-upper'),
+    lowerLabel: document.getElementById('label-lower'),
+    totalLabel: document.getElementById('label-total'),
+    classSelect: document.getElementById('class'),
+    nominalInput: document.getElementById('nominal'),
+    message: document.getElementById('message'),
+    results: document.getElementById('results'),
+    upperValue: document.getElementById('upper-value'),
+    lowerValue: document.getElementById('lower-value'),
+    totalValue: document.getElementById('total-value'),
+    langButtons: document.querySelectorAll('.lang-btn'),
+    app: document.getElementById('app')
+  };
+
+  let currentLang = 'en';
+
+  function setLanguage(lang) {
+    currentLang = lang;
+    const t = translations[lang];
+    document.documentElement.lang = lang === 'ar' ? 'ar' : lang;
+    document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
+    elements.app.classList.toggle('rtl', lang === 'ar');
+    elements.title.textContent = t.title;
+    elements.nominalLabel.textContent = t.enter_nominal;
+    elements.classLabel.textContent = t.select_class;
+    elements.calculateBtn.textContent = t.calculate;
+    elements.upperLabel.textContent = t.upper_tol;
+    elements.lowerLabel.textContent = t.lower_tol;
+    elements.totalLabel.textContent = t.total_tol;
+    Array.from(elements.classSelect.options).forEach(option => {
+      const value = option.value;
+      option.textContent = t.classes[value];
+    });
+    elements.nominalInput.placeholder = '0';
+    elements.langButtons.forEach(btn => btn.classList.toggle('active', btn.dataset.lang === lang));
+    if (elements.message.dataset.type) {
+      elements.message.textContent = t.messages[elements.message.dataset.type];
+    }
+    calculateTolerance();
+  }
+
+  function showMessage(type) {
+    const msg = translations[currentLang].messages[type];
+    elements.message.textContent = msg;
+    elements.message.dataset.type = type;
+    elements.message.style.display = 'block';
+    elements.results.hidden = true;
+  }
+
+  function clearMessage() {
+    elements.message.textContent = '';
+    delete elements.message.dataset.type;
+    elements.message.style.display = 'none';
+  }
+
+  function findTolerance(value, toleranceClass) {
+    return toleranceTable.find(range => {
+      const minCheck = range.minInclusive ? value >= range.min : value > range.min;
+      const maxCheck = value <= range.max;
+      return minCheck && maxCheck;
+    })?.[toleranceClass] ?? null;
+  }
+
+  function calculateTolerance() {
+    const rawValue = elements.nominalInput.value.trim();
+    if (!rawValue) {
+      clearMessage();
+      elements.results.hidden = true;
+      return;
+    }
+
+    const nominalValue = parseFloat(rawValue.replace(',', '.'));
+    const toleranceClass = elements.classSelect.value;
+
+    if (Number.isNaN(nominalValue)) {
+      showMessage('invalid');
+      return;
+    }
+    if (nominalValue < 0 || nominalValue > 2000) {
+      showMessage('out_of_range');
+      return;
+    }
+
+    const tolerance = findTolerance(nominalValue, toleranceClass);
+
+    if (tolerance === null) {
+      showMessage('out_of_range');
+      return;
+    }
+
+    clearMessage();
+
+    const upper = tolerance;
+    const lower = -tolerance;
+    const total = (upper - lower);
+
+    elements.upperValue.textContent = `+${upper.toFixed(2)} mm`;
+    elements.lowerValue.textContent = `-${Math.abs(lower).toFixed(2)} mm`;
+    elements.totalValue.textContent = `${total.toFixed(2)} mm`;
+    elements.results.hidden = false;
+  }
+
+  elements.calculateBtn.addEventListener('click', calculateTolerance);
+  elements.nominalInput.addEventListener('input', calculateTolerance);
+  elements.classSelect.addEventListener('change', calculateTolerance);
+  elements.langButtons.forEach(btn => {
+    btn.addEventListener('click', () => setLanguage(btn.dataset.lang));
+  });
+
+  setLanguage('en');
+</script>
+</body>
+</html>
