@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DIN ISO 2768 Tolerance Calculator</title>
+  <style>
+    :root {
+      color-scheme: light dark;
+      --bg: #f5f7fb;
+      --card-bg: #ffffff;
+      --border: rgba(0,0,0,0.08);
+      --text: #1f2933;
+      --accent: #2563eb;
+      --accent-light: rgba(37, 99, 235, 0.12);
+      --danger: #c53030;
+      font-size: 16px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem 1rem;
+    }
+
+    .app {
+      background: var(--card-bg);
+      border-radius: 16px;
+      box-shadow: 0 20px 45px rgba(15, 23, 42, 0.08);
+      padding: 2.5rem 2rem;
+      width: min(480px, 100%);
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+      border: 1px solid var(--border);
+    }
+
+    .lang-switcher {
+      display: flex;
+      justify-content: flex-end;
+      gap: 0.5rem;
+    }
+
+    .lang-btn {
+      border: 1px solid var(--border);
+      background: transparent;
+      padding: 0.35rem 0.75rem;
+      border-radius: 999px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+    }
+
+    .lang-btn.active {
+      background: var(--accent-light);
+      color: var(--accent);
+      border-color: rgba(37, 99, 235, 0.35);
+      font-weight: 600;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 1.75rem;
+      text-align: center;
+    }
+
+    .inputs {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    label {
+      font-weight: 600;
+      margin-bottom: 0.35rem;
+      display: block;
+    }
+
+    input, select {
+      width: 100%;
+      padding: 0.65rem 0.75rem;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      font-size: 1rem;
+      background-color: #fdfdff;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    input:focus, select:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-light);
+    }
+
+    button.calculate {
+      padding: 0.75rem;
+      background: var(--accent);
+      color: white;
+      border: none;
+      border-radius: 10px;
+      font-size: 1.05rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.15s ease, box-shadow 0.2s ease;
+    }
+
+    button.calculate:active {
+      transform: translateY(1px);
+    }
+
+    .results {
+      background: #f8fafc;
+      border-radius: 12px;
+      padding: 1.25rem;
+      border: 1px solid rgba(15, 23, 42, 0.08);
+      display: flex;
+      flex-direction: column;
+      gap: 0.8rem;
+    }
+
+    .result-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      font-size: 1rem;
+    }
+
+    .result-label {
+      font-weight: 600;
+    }
+
+    .result-value {
+      font-variant-numeric: tabular-nums;
+    }
+
+    .message {
+      min-height: 1.2rem;
+      font-size: 0.95rem;
+      color: var(--danger);
+      text-align: center;
+    }
+
+    @media (max-width: 480px) {
+      body {
+        padding: 1rem;
+      }
+
+      .app {
+        padding: 2rem 1.25rem;
+      }
+
+      .result-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.15rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="lang-switcher">
+      <button class="lang-btn active" data-lang="en">🇬🇧 English</button>
+      <button class="lang-btn" data-lang="de">🇩🇪 Deutsch</button>
+      <button class="lang-btn" data-lang="ar">🇸🇾 العربية</button>
+    </div>
+
+    <h1 data-i18n="title">DIN ISO 2768 Tolerance Calculator</h1>
+
+    <div class="inputs">
+      <div class="field">
+        <label for="nominal" data-i18n="enter_nominal">Enter nominal size (mm)</label>
+        <input id="nominal" type="number" step="0.01" min="0" placeholder="0.00" />
+      </div>
+      <div class="field">
+        <label for="class" data-i18n="select_class">Select tolerance class</label>
+        <select id="class">
+          <option value="f" data-i18n-option="class_f">Fine (f)</option>
+          <option value="m" data-i18n-option="class_m">Medium (m)</option>
+          <option value="c" data-i18n-option="class_c">Coarse (c)</option>
+          <option value="v" data-i18n-option="class_v">Very coarse (v)</option>
+        </select>
+      </div>
+    </div>
+
+    <button class="calculate" data-i18n="calculate">Calculate</button>
+
+    <div class="message" id="message"></div>
+
+    <div class="results" aria-live="polite">
+      <div class="result-item">
+        <span class="result-label" data-i18n="upper_tol">Upper deviation (+)</span>
+        <span class="result-value" id="upperValue">—</span>
+      </div>
+      <div class="result-item">
+        <span class="result-label" data-i18n="lower_tol">Lower deviation (−)</span>
+        <span class="result-value" id="lowerValue">—</span>
+      </div>
+      <div class="result-item">
+        <span class="result-label" data-i18n="total_tol">Total tolerance</span>
+        <span class="result-value" id="totalValue">—</span>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const toleranceTable = [
+      { min: 0, max: 3, minExclusive: false, maxInclusive: true, values: { f: 0.05, m: 0.1, c: 0.2, v: 0.5 } },
+      { min: 3, max: 6, minExclusive: true, maxInclusive: true, values: { f: 0.05, m: 0.1, c: 0.3, v: 0.5 } },
+      { min: 6, max: 30, minExclusive: true, maxInclusive: true, values: { f: 0.1, m: 0.2, c: 0.5, v: 1.0 } },
+      { min: 30, max: 120, minExclusive: true, maxInclusive: true, values: { f: 0.15, m: 0.3, c: 0.8, v: 1.5 } },
+      { min: 120, max: 400, minExclusive: true, maxInclusive: true, values: { f: 0.2, m: 0.5, c: 1.2, v: 2.5 } },
+      { min: 400, max: 1000, minExclusive: true, maxInclusive: true, values: { f: 0.3, m: 0.8, c: 2.0, v: 4.0 } },
+      { min: 1000, max: 2000, minExclusive: true, maxInclusive: true, values: { f: 0.5, m: 1.2, c: 3.0, v: 6.0 } }
+    ];
+
+    const translations = {
+      en: {
+        title: "DIN ISO 2768 Tolerance Calculator",
+        enter_nominal: "Enter nominal size (mm)",
+        select_class: "Select tolerance class",
+        calculate: "Calculate",
+        upper_tol: "Upper deviation (+)",
+        lower_tol: "Lower deviation (−)",
+        total_tol: "Total tolerance",
+        invalid_input: "Please enter a nominal size between 0 and 2000 mm.",
+        no_range: "No tolerance data available for this size.",
+        class_f: "Fine (f)",
+        class_m: "Medium (m)",
+        class_c: "Coarse (c)",
+        class_v: "Very coarse (v)"
+      },
+      de: {
+        title: "DIN ISO 2768 Toleranzrechner",
+        enter_nominal: "Nennmaß eingeben (mm)",
+        select_class: "Toleranzklasse wählen",
+        calculate: "Berechnen",
+        upper_tol: "Obere Abweichung (+)",
+        lower_tol: "Untere Abweichung (−)",
+        total_tol: "Gesamttoleranz",
+        invalid_input: "Bitte ein Nennmaß zwischen 0 und 2000 mm eingeben.",
+        no_range: "Für dieses Maß sind keine Toleranzen hinterlegt.",
+        class_f: "Fein (f)",
+        class_m: "Mittel (m)",
+        class_c: "Grob (c)",
+        class_v: "Sehr grob (v)"
+      },
+      ar: {
+        title: "حاسبة السماحات DIN ISO 2768",
+        enter_nominal: "أدخل المقاس الاسمي (مم)",
+        select_class: "اختر فئة التسامح",
+        calculate: "احسب",
+        upper_tol: "التسامح الأعلى (+)",
+        lower_tol: "التسامح الأدنى (−)",
+        total_tol: "إجمالي التسامح",
+        invalid_input: "يرجى إدخال مقاس اسمي بين 0 و2000 مم.",
+        no_range: "لا توجد بيانات تسامح لهذا المقاس.",
+        class_f: "دقيق (f)",
+        class_m: "متوسط (m)",
+        class_c: "خشن (c)",
+        class_v: "خشن جدًا (v)"
+      }
+    };
+
+    const nominalInput = document.getElementById('nominal');
+    const classSelect = document.getElementById('class');
+    const calculateButton = document.querySelector('button.calculate');
+    const messageEl = document.getElementById('message');
+    const upperValue = document.getElementById('upperValue');
+    const lowerValue = document.getElementById('lowerValue');
+    const totalValue = document.getElementById('totalValue');
+    const langButtons = document.querySelectorAll('.lang-btn');
+
+    let currentLang = 'en';
+
+    function formatValue(num) {
+      const rounded = Number(num.toFixed(3));
+      return (rounded === 0 ? 0 : rounded).toString();
+    }
+
+    function resetResults() {
+      upperValue.textContent = '—';
+      lowerValue.textContent = '—';
+      totalValue.textContent = '—';
+    }
+
+    function findToleranceRange(value) {
+      for (const range of toleranceTable) {
+        const minMatch = range.minExclusive ? value > range.min : value >= range.min;
+        const maxMatch = range.maxInclusive ? value <= range.max : value < range.max;
+        if (minMatch && maxMatch) {
+          return range;
+        }
+      }
+      return null;
+    }
+
+    function calculateTolerance() {
+      const value = parseFloat(nominalInput.value);
+      if (Number.isNaN(value)) {
+        messageEl.textContent = '';
+        resetResults();
+        return;
+      }
+      if (value < 0 || value > 2000) {
+        messageEl.textContent = translations[currentLang].invalid_input;
+        resetResults();
+        return;
+      }
+      const range = findToleranceRange(value);
+      if (!range) {
+        messageEl.textContent = translations[currentLang].no_range;
+        resetResults();
+        return;
+      }
+
+      const selectedClass = classSelect.value;
+      const tolValue = range.values[selectedClass];
+      const upper = tolValue;
+      const lower = -tolValue;
+      const total = upper - lower;
+
+      upperValue.textContent = `+${formatValue(upper)} mm`;
+      lowerValue.textContent = `${formatValue(lower)} mm`;
+      totalValue.textContent = `${formatValue(total)} mm`;
+      messageEl.textContent = '';
+    }
+
+    function updateLanguage(lang) {
+      currentLang = lang;
+      const dictionary = translations[lang];
+      document.documentElement.lang = lang;
+      document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
+
+      document.querySelectorAll('[data-i18n]').forEach(el => {
+        const key = el.getAttribute('data-i18n');
+        if (dictionary[key]) {
+          el.textContent = dictionary[key];
+        }
+      });
+
+      document.querySelectorAll('[data-i18n-option]').forEach(option => {
+        const key = option.getAttribute('data-i18n-option');
+        if (dictionary[key]) {
+          option.textContent = dictionary[key];
+        }
+      });
+
+      nominalInput.setAttribute('placeholder', lang === 'ar' ? '٠٫٠٠' : '0.00');
+
+      langButtons.forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.lang === lang);
+      });
+
+      calculateTolerance();
+    }
+
+    calculateButton.addEventListener('click', calculateTolerance);
+    nominalInput.addEventListener('input', calculateTolerance);
+    classSelect.addEventListener('change', calculateTolerance);
+
+    langButtons.forEach(btn => {
+      btn.addEventListener('click', () => updateLanguage(btn.dataset.lang));
+    });
+
+    updateLanguage('en');
+  </script>
+</body>
+</html>
