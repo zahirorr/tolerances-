@@ -178,6 +178,7 @@ const THEME_KEY="iso286_theme_core";
 function applyTheme(t){ document.documentElement.dataset.theme=t; localStorage.setItem(THEME_KEY,t); updateThemeStatus(); }
 function updateThemeStatus(){
   const st=document.getElementById('theme-status');
+  if(!st) return;
   const lang=document.documentElement.lang||'en';
   const txt=(document.documentElement.dataset.theme==='light')
     ? {en:'Light mode',de:'Helles Thema',ar:'الوضع الفاتح'}[lang]
