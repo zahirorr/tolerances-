@@ -1,0 +1,290 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>DIN EN ISO 286 – Limits & Fits (Working Core)</title>
+<style>
+  :root{ --bg:#0b0f14; --panel:#0f1621; --card:#111827; --text:#e5e7eb; --muted:#9ca3af; --border:#1f2937; --accent:#4a90e2; }
+  :root[data-theme="light"]{ --bg:#f4f6f8; --panel:#ffffff; --card:#ffffff; --text:#1a1a1a; --muted:#5f6b7a; --border:#d9e1ea; --accent:#4a90e2; }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,Segoe UI,Roboto,Helvetica,Arial;transition:background .3s,color .3s}
+  header{position:sticky;top:0;background:color-mix(in oklab, var(--bg) 92%, transparent);backdrop-filter:blur(8px);border-bottom:1px solid var(--border);padding:16px 12px}
+  .wrap{max-width:1100px;margin:0 auto;padding:16px} h1{margin:0 0 6px 0;font-size:20px} .sub{margin:0;color:var(--muted);font-size:13px}
+  .row{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px;align-items:center}
+  .group{display:flex;gap:8px;align-items:center;background:var(--panel);padding:8px;border:1px solid var(--border);border-radius:12px}
+  .lang button,.btn,.pill{padding:8px 10px;border-radius:10px;border:1px solid var(--border);background:var(--card);color:var(--text);cursor:pointer}
+  .btn.primary{background:var(--accent);border-color:color-mix(in oklab, var(--accent) 70%, #000 30%);color:#fff}
+  .pill.primary{background:var(--accent);color:#fff;border-color:transparent}
+  main .card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px;margin:16px 0}
+  label{font-size:13px;color:var(--muted)}
+  input,select{width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--border);background:color-mix(in oklab, var(--bg) 92%, #fff 8%);color:var(--text)}
+  .grid{display:grid;grid-template-columns:repeat(12,1fr);gap:12px}
+  .col-3{grid-column:span 3} .col-4{grid-column:span 4} .col-6{grid-column:span 6} .col-12{grid-column:span 12}
+  .muted{color:var(--muted)} .hidden{display:none}
+  table{width:100%;border-collapse:collapse} th,td{padding:8px;border-bottom:1px solid var(--border);text-align:left}
+  th{font-weight:600} .tbl{background:var(--card);border:1px solid var(--border);border-radius:12px;overflow:hidden}
+  footer{padding:16px 12px;border-top:1px solid var(--border);color:var(--muted)}
+  .footer-row{max-width:1100px;margin:0 auto;padding:0 16px;display:flex;gap:16px;align-items:center;justify-content:center;flex-wrap:wrap}
+  .theme-chip{display:flex;align-items:center;gap:8px;background:var(--panel);border:1px solid var(--border);color:var(--text);padding:6px 10px;border-radius:999px}
+  .theme-btn{cursor:pointer;border:none;background:transparent;font-size:16px;line-height:1}
+  .yt-link{display:flex;align-items:center;gap:8px;text-decoration:none;color:var(--text);} .yt-icon{width:18px;height:18px;display:inline-block}
+  a{color:var(--accent)} .rtl{direction:rtl}
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <h1 data-i18n="title">DIN EN ISO 286 – Limits & Fits</h1>
+    <p class="sub" data-i18n="subtitle">Working core (H/h & JS/js exact). IT5–IT12, 1–500 mm. Multilingual + theme.</p>
+    <div class="row">
+      <div class="group lang">
+        <strong class="muted" data-i18n="language">Language</strong>
+        <button data-lang="en" class="active">English</button>
+        <button data-lang="de">Deutsch</button>
+        <button data-lang="ar">العربية</button>
+      </div>
+      <div class="group">
+        <span class="muted" data-i18n="basis">Basis</span>
+        <button class="pill" data-basis="hole">Hole-basis</button>
+        <button class="pill" data-basis="shaft">Shaft-basis</button>
+        <span class="muted" id="basis-hint"></span>
+      </div>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+  <div class="card">
+    <h3 data-i18n="fit_title">Select fit</h3>
+    <div class="grid">
+      <div class="col-3">
+        <label data-i18n="nominal_mm">Nominal size (mm)</label>
+        <input id="D" type="number" min="1" max="500" value="50" step="0.001">
+      </div>
+
+      <div class="col-3">
+        <label data-i18n="hole_letter">Hole letter</label>
+        <select id="hole-letter"></select>
+      </div>
+      <div class="col-3">
+        <label data-i18n="hole_grade">Hole IT grade</label>
+        <select id="hole-grade"></select>
+      </div>
+
+      <div class="col-3">
+        <label data-i18n="shaft_letter">Shaft letter</label>
+        <select id="shaft-letter"></select>
+      </div>
+      <div class="col-3">
+        <label data-i18n="shaft_grade">Shaft IT grade</label>
+        <select id="shaft-grade"></select>
+      </div>
+
+      <div class="col-12">
+        <button id="calc" class="btn primary" data-i18n="calculate">Calculate</button>
+      </div>
+    </div>
+
+    <div id="out" class="hidden">
+      <div class="tbl">
+        <table id="result-table">
+          <thead>
+            <tr>
+              <th data-i18n="th_param">Parameter</th>
+              <th data-i18n="th_symbol">Symbol</th>
+              <th data-i18n="th_value">Value</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+
+    <p class="muted" data-i18n="note">
+      H/h & JS/js exact (ISO logic). G/F & g/f placeholders currently disabled to avoid wrong values.
+    </p>
+  </div>
+</main>
+
+<footer>
+  <div class="footer-row">
+    <span class="theme-chip">
+      <button id="theme-toggle" class="theme-btn" aria-label="Toggle theme">☀️/🌙</button>
+      <span id="theme-status">Dark mode</span>
+    </span>
+    <span>|</span>
+    <span class="dev">Developed by Engineer Zaher Taleb</span>
+    <span>|</span>
+    <a class="yt-link" href="https://www.youtube.com/@Zaher.Taleb.mechanical.design" target="_blank" rel="noopener">
+      <svg class="yt-icon" viewBox="0 0 24 24" aria-hidden="true">
+        <path fill="#FF0000" d="M23.5 6.2s-.2-1.6-.8-2.3c-.8-.8-1.6-.8-2-0.9C17.6 2.5 12 2.5 12 2.5h0s-5.6 0-8.7.4c-.5.1-1.2.1-2 .9C.7 4.6.5 6.2.5 6.2S0 8.1 0 10v1.9c0 1.9.5 3.8.5 3.8s.2 1.6.8 2.3c.8.8 1.8.8 2.3.9 1.7.2 7.4.4 8.4.4h.1c1 0 6.7-.1 8.4-.4.5-.1 1.5-.1 2.3-.9.6-.6.8-2.3.8-2.3s.5-1.9.5-3.8V10c0-1.9-.5-3.8-.5-3.8z"/>
+        <path fill="#fff" d="M9.8 15.3V7.9l6.4 3.7-6.4 3.7z"/>
+      </svg>
+      <span>YouTube Channel</span>
+    </a>
+  </div>
+</footer>
+
+<script>
+// I18N
+const I18N = {
+  en: { title:"DIN EN ISO 286 – Limits & Fits", subtitle:"Working core (H/h & JS/js exact). IT5–IT12, 1–500 mm. Multilingual + theme.",
+        language:"Language", basis:"Basis", fit_title:"Select fit",
+        nominal_mm:"Nominal size (mm)", hole_letter:"Hole letter", shaft_letter:"Shaft letter",
+        hole_grade:"Hole IT grade", shaft_grade:"Shaft IT grade",
+        calculate:"Calculate",
+        th_param:"Parameter", th_symbol:"Symbol", th_value:"Value",
+        note:"H/h & JS/js exact (ISO logic).",
+        basis_hint_hole:"Hole-basis: hole EI/ES are absolute; shaft follows.",
+        basis_hint_shaft:"Shaft-basis: shaft ei/es are absolute; hole follows.",
+        res_hole_es:"Hole upper deviation", res_hole_ei:"Hole lower deviation",
+        res_shaft_es:"Shaft upper deviation", res_shaft_ei:"Shaft lower deviation",
+        res_hole_upper:"Hole upper size", res_hole_lower:"Hole lower size",
+        res_shaft_upper:"Shaft upper size", res_shaft_lower:"Shaft lower size",
+        res_max_clear:"Max clearance", res_min_clear:"Min clearance / interference" },
+  de: { title:"DIN EN ISO 286 – Passungen", subtitle:"Arbeitskern (H/h & JS/js exakt). IT5–IT12, 1–500 mm. Mehrsprachig + Theme.",
+        language:"Sprache", basis:"Grundlage", fit_title:"Passung wählen",
+        nominal_mm:"Nennmaß (mm)", hole_letter:"Bohrungsbuchstabe", shaft_letter:"Wellenbuchstabe",
+        hole_grade:"Bohrung IT‑Grad", shaft_grade:"Welle IT‑Grad",
+        calculate:"Berechnen",
+        th_param:"Parameter", th_symbol:"Symbol", th_value:"Wert",
+        note:"H/h & JS/js exakt (ISO-Logik).",
+        basis_hint_hole:"Bohrungsgrundlage: EI/ES der Bohrung sind absolut; Welle folgt.",
+        basis_hint_shaft:"Wellengrundlage: ei/es der Welle sind absolut; Bohrung folgt.",
+        res_hole_es:"Bohrung obere Abweichung", res_hole_ei:"Bohrung untere Abweichung",
+        res_shaft_es:"Welle obere Abweichung", res_shaft_ei:"Welle untere Abweichung",
+        res_hole_upper:"Bohrung oberes Grenzmaß", res_hole_lower:"Bohrung unteres Grenzmaß",
+        res_shaft_upper:"Welle oberes Grenzmaß", res_shaft_lower:"Welle unteres Grenzmaß",
+        res_max_clear:"Max. Spiel", res_min_clear:"Min. Spiel/Übermaß" },
+  ar: { title:"DIN EN ISO 286 – حساب البرازخ", subtitle:"النواة العاملة (H/h و JS/js بدقة). IT5–IT12، 1–500 مم.",
+        language:"اللغة", basis:"الأساس", fit_title:"اختر البرزخ",
+        nominal_mm:"المقاس الاسمي (مم)", hole_letter:"حرف الثقب", shaft_letter:"حرف العمود",
+        hole_grade:"درجة IT للثقب", shaft_grade:"درجة IT للعمود",
+        calculate:"احسب",
+        th_param:"البند", th_symbol:"الرمز", th_value:"القيمة",
+        note:"H/h & JS/js بدقة (منطق ISO).",
+        basis_hint_hole:"أساس الثقب: EI/ES للثقب مطلقة؛ العمود يتبع.",
+        basis_hint_shaft:"أساس العمود: ei/es للعمود مطلقة؛ الثقب يتبع.",
+        res_hole_es:"انحراف الثقب الأعلى", res_hole_ei:"انحراف الثقب الأدنى",
+        res_shaft_es:"انحراف العمود الأعلى", res_shaft_ei:"انحراف العمود الأدنى",
+        res_hole_upper:"مقاس الثقب الأعلى", res_hole_lower:"مقاس الثقب الأدنى",
+        res_shaft_upper:"مقاس العمود الأعلى", res_shaft_lower:"مقاس العمود الأدنى",
+        res_max_clear:"أكبر خلوص", res_min_clear:"أصغر خلوص/تداخل" }
+};
+
+// Theme
+const THEME_KEY="iso286_theme_core";
+function applyTheme(t){ document.documentElement.dataset.theme=t; localStorage.setItem(THEME_KEY,t); updateThemeStatus(); }
+function updateThemeStatus(){
+  const st=document.getElementById('theme-status');
+  const lang=document.documentElement.lang||'en';
+  const txt=(document.documentElement.dataset.theme==='light')
+    ? {en:'Light mode',de:'Helles Thema',ar:'الوضع الفاتح'}[lang]
+    : {en:'Dark mode',de:'Dunkles Thema',ar:'الوضع الداكن'}[lang];
+  st.textContent = txt;
+}
+document.getElementById('theme-toggle').addEventListener('click', ()=>{
+  const cur=document.documentElement.dataset.theme==='light'?'light':'dark'; applyTheme(cur==='light'?'dark':'light');
+});
+(function initTheme(){ const saved=localStorage.getItem(THEME_KEY); applyTheme(saved==='light'?'light':'dark'); })();
+
+// Language
+function applyLang(code){
+  document.documentElement.lang=code;
+  document.body.classList.toggle('rtl', code==='ar');
+  document.querySelectorAll("[data-i18n]").forEach(el=>{ const k=el.dataset.i18n; if(I18N[code][k]) el.textContent = I18N[code][k]; });
+  document.querySelectorAll(".lang button").forEach(b=>b.classList.toggle('active', b.dataset.lang===code));
+  const hint=document.getElementById('basis-hint'); hint.textContent=(BASIS==='hole')?I18N[code].basis_hint_hole:I18N[code].basis_hint_shaft;
+  updateThemeStatus();
+}
+document.querySelectorAll(".lang button").forEach(b=>b.addEventListener('click', ()=>applyLang(b.dataset.lang)));
+applyLang('en');
+
+// Basis toggle
+let BASIS='hole';
+function setBasis(b){ BASIS=b; document.querySelectorAll('[data-basis]').forEach(x=>x.classList.toggle('primary', x.dataset.basis===b));
+  const code=document.documentElement.lang||'en'; document.getElementById('basis-hint').textContent=(BASIS==='hole')?I18N[code].basis_hint_hole:I18N[code].basis_hint_shaft; }
+document.querySelectorAll('[data-basis]').forEach(btn=>btn.addEventListener('click', ()=>setBasis(btn.dataset.basis)));
+setBasis('hole');
+
+// IT via i-unit
+const IT_MULT = { IT5:7, IT6:10, IT7:16, IT8:25, IT9:40, IT10:64, IT11:100, IT12:160 };
+function i_unit(D){ return 0.45*Math.cbrt(D) + 0.001*D; } // µm
+function itTol(D, grade){ const m=IT_MULT[grade]; return (m? (m*i_unit(D))/1000 : NaN); } // mm
+
+// Letters supported now
+const HOLE_LETTERS = ["H","JS"];
+const SHAFT_LETTERS = ["h","js"];
+const IT_GRADES = Object.keys(IT_MULT);
+
+// Populate selects with defaults
+function fillSelect(id, arr, def){
+  const el=document.getElementById(id); el.innerHTML="";
+  arr.forEach(v=>{ const o=document.createElement('option'); o.value=v; o.textContent=v; el.appendChild(o); });
+  if(def) el.value=def;
+}
+fillSelect('hole-letter', HOLE_LETTERS, "H");
+fillSelect('hole-grade', IT_GRADES, "IT7");
+fillSelect('shaft-letter', SHAFT_LETTERS, "h");
+fillSelect('shaft-grade', IT_GRADES, "IT6");
+
+// Deviation models exact
+function holeDeviation(letter, IT_mm){
+  if(letter==="H")  return { EI:0, ES: IT_mm };
+  if(letter==="JS") return { EI:-IT_mm/2, ES: IT_mm/2 };
+  return null;
+}
+function shaftDeviation(letter, IT_mm){
+  if(letter==="h")  return { ei:-IT_mm, es:0 };
+  if(letter==="js") return { ei:-IT_mm/2, es: IT_mm/2 };
+  return null;
+}
+
+// Helpers
+function mm_fmt(x){ return (Math.round(x*1000)/1000).toFixed(3)+" mm"; }
+function renderTable(rows){
+  const tbody=document.querySelector('#result-table tbody'); tbody.innerHTML="";
+  rows.forEach(r=>{ const tr=document.createElement('tr'); const c1=document.createElement('td'); c1.textContent=r.param; const c2=document.createElement('td'); c2.textContent=r.symbol; const c3=document.createElement('td'); c3.textContent=r.value; tr.appendChild(c1); tr.appendChild(c2); tr.appendChild(c3); tbody.appendChild(tr); });
+  document.getElementById('out').classList.remove('hidden');
+}
+
+function calculate(){
+  const D=parseFloat(document.getElementById('D').value);
+  const holeL=document.getElementById('hole-letter').value;
+  const holeG=document.getElementById('hole-grade').value;
+  const shaftL=document.getElementById('shaft-letter').value;
+  const shaftG=document.getElementById('shaft-grade').value;
+  if(!(D>=1 && D<=500)){ alert("Enter D between 1 and 500 mm."); return; }
+  const IT_h=itTol(D, holeG); const IT_s=itTol(D, shaftG);
+  const code=document.documentElement.lang||'en';
+  const hole=holeDeviation(holeL, IT_h); const shaft=shaftDeviation(shaftL, IT_s);
+  if(!hole || !shaft){ alert("Selected letters unsupported."); return; }
+  const hole_upper = D + hole.ES;
+  const hole_lower = D + hole.EI;
+  const shaft_upper= D + shaft.es;
+  const shaft_lower= D + shaft.ei;
+  const max_clear = hole_upper - shaft_lower;
+  const min_clear = hole_lower - shaft_upper;
+  const rows = [
+    {param:I18N[code].res_hole_es,   symbol:"ES",   value:mm_fmt(hole.ES)},
+    {param:I18N[code].res_hole_ei,   symbol:"EI",   value:mm_fmt(hole.EI)},
+    {param:I18N[code].res_shaft_es,  symbol:"es",   value:mm_fmt(shaft.es)},
+    {param:I18N[code].res_shaft_ei,  symbol:"ei",   value:mm_fmt(shaft.ei)},
+    {param:I18N[code].res_hole_upper,symbol:"D_max",value:mm_fmt(hole_upper)},
+    {param:I18N[code].res_hole_lower,symbol:"D_min",value:mm_fmt(hole_lower)},
+    {param:I18N[code].res_shaft_upper,symbol:"d_max",value:mm_fmt(shaft_upper)},
+    {param:I18N[code].res_shaft_lower,symbol:"d_min",value:mm_fmt(shaft_lower)},
+    {param:I18N[code].res_max_clear, symbol:"",     value:mm_fmt(max_clear)},
+    {param:I18N[code].res_min_clear, symbol:"",     value:mm_fmt(min_clear)}
+  ];
+  renderTable(rows);
+}
+
+document.getElementById('calc').addEventListener('click', calculate);
+
+// Auto-calc once on load for immediate feedback
+window.addEventListener('DOMContentLoaded', ()=>{ calculate(); });
+</script>
+</body>
+</html>
